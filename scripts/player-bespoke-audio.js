@@ -129,8 +129,11 @@ class PlayerBespokeAudio {
     }
 
     // Add audio tab to navigation
-    const audioTab = $(`<a class="item" data-tab="audio">
-            <i class="fas fa-music"></i> ${game.i18n.localize("PBA.AudioTab")}
+    const audioTab =
+      $(`<a class="item" data-tab="audio" title="${game.i18n.localize(
+        "PBA.AudioTab"
+      )}">
+            <i class="fas fa-volume-up"></i>
         </a>`);
     tabs.append(audioTab);
 
@@ -163,19 +166,68 @@ class PlayerBespokeAudio {
     PlayerBespokeAudio.bindAudioTabEvents(html, sheet.actor);
   }
 
+  static async refreshAudioTab(html, actor) {
+    // Get updated audio files for this actor
+    const audioFiles =
+      actor.getFlag(
+        PlayerBespokeAudio.ID,
+        PlayerBespokeAudio.FLAGS.AUDIO_FILES
+      ) || [];
+
+    // Re-render the audio tab content
+    const audioTabContent = await renderTemplate(
+      PlayerBespokeAudio.TEMPLATES.AUDIO_TAB,
+      {
+        audioFiles: audioFiles,
+        isGM: game.user.isGM,
+        actorId: actor.id,
+      }
+    );
+
+    // Update the audio tab content
+    const audioTab = html.find('.tab[data-tab="audio"]');
+    audioTab.html(audioTabContent);
+
+    // Unbind existing event listeners to prevent duplicates
+    PlayerBespokeAudio.unbindAudioTabEvents(html);
+
+    // Re-bind event listeners for the refreshed content
+    PlayerBespokeAudio.bindAudioTabEvents(html, actor);
+  }
+
+  static unbindAudioTabEvents(html) {
+    // Unbind all audio tab related events to prevent duplicates
+    html.find(".audio-file-upload").off("change");
+    html.find(".delete-audio-file").off("click");
+    html.find(".play-audio-file").off("click");
+  }
+
   static bindAudioTabEvents(html, actor) {
     // File upload handler
     html.find(".audio-file-upload").on("change", async (event) => {
       const file = event.target.files[0];
       if (!file) return;
 
+      // Show upload in progress
+      const audioTab = html.find('.tab[data-tab="audio"]');
+      const originalContent = audioTab.html();
+      audioTab.html(
+        '<div class="upload-progress"><i class="fas fa-spinner fa-spin"></i> Uploading audio file...</div>'
+      );
+
       try {
         await PlayerBespokeAudio.uploadAudioFile(actor, file);
-        // Refresh the sheet to show the new file
-        actor.sheet.render();
+        // Refresh just the audio tab content
+        await PlayerBespokeAudio.refreshAudioTab(html, actor);
+        ui.notifications.info(`Audio file "${file.name}" uploaded and ready!`);
       } catch (error) {
+        // Restore original content on error
+        audioTab.html(originalContent);
         ui.notifications.error(`Failed to upload audio file: ${error.message}`);
       }
+
+      // Clear the file input
+      event.target.value = "";
     });
 
     // Delete audio file handler
@@ -191,7 +243,11 @@ class PlayerBespokeAudio {
       if (confirmed) {
         try {
           await PlayerBespokeAudio.deleteAudioFile(actor, fileName);
-          actor.sheet.render();
+          // Refresh just the audio tab content
+          await PlayerBespokeAudio.refreshAudioTab(html, actor);
+          ui.notifications.info(
+            `Audio file "${fileName}" deleted successfully`
+          );
         } catch (error) {
           ui.notifications.error(
             `Failed to delete audio file: ${error.message}`
@@ -216,14 +272,18 @@ class PlayerBespokeAudio {
       throw new Error("Only audio files are allowed");
     }
 
-    // Create upload path
-    const uploadPath = `modules/${PlayerBespokeAudio.ID}/audio/${actor.id}/`;
+    // Create upload path using Foundry's data directory structure
+    // This will create: foundryuserdata/Data/player-audio/[actor-id]/
+    const uploadPath = `player-audio/${actor.id}/`;
 
     try {
       // Show user that we're preparing the upload
       ui.notifications.info(`Preparing to upload "${file.name}"...`);
 
-      // Try to upload the file directly - Foundry will create directories automatically
+      // Ensure the directory exists before upload
+      await PlayerBespokeAudio.ensureDirectoryExists(uploadPath);
+
+      // Try to upload the file
       let response;
       try {
         response = await FilePicker.upload("data", uploadPath, file);
@@ -237,7 +297,8 @@ class PlayerBespokeAudio {
         );
 
         // Fallback: try to upload to a simpler path
-        const fallbackPath = `modules/${PlayerBespokeAudio.ID}/audio/`;
+        const fallbackPath = `player-audio/`;
+        await PlayerBespokeAudio.ensureDirectoryExists(fallbackPath);
         ui.notifications.info(`Trying fallback upload location...`);
         response = await FilePicker.upload("data", fallbackPath, file);
 
@@ -276,7 +337,6 @@ class PlayerBespokeAudio {
         audioFiles
       );
 
-      ui.notifications.info(`Audio file "${file.name}" uploaded successfully`);
       console.log(`${PlayerBespokeAudio.ID} | Uploaded audio file:`, newFile);
     } catch (error) {
       console.error(
@@ -284,6 +344,57 @@ class PlayerBespokeAudio {
         error
       );
       throw new Error(`Upload failed: ${error.message}`);
+    }
+  }
+
+  static async ensureDirectoryExists(directoryPath) {
+    try {
+      // Try to browse the directory to see if it exists
+      await FilePicker.browse("data", directoryPath);
+      console.log(
+        `${PlayerBespokeAudio.ID} | Directory exists: ${directoryPath}`
+      );
+    } catch (error) {
+      // Directory doesn't exist, try to create it
+      console.log(
+        `${PlayerBespokeAudio.ID} | Creating directory: ${directoryPath}`
+      );
+
+      try {
+        // Use FilePicker.createDirectory to create the directory
+        await FilePicker.createDirectory("data", directoryPath);
+        console.log(
+          `${PlayerBespokeAudio.ID} | Directory created successfully: ${directoryPath}`
+        );
+      } catch (createError) {
+        console.warn(
+          `${PlayerBespokeAudio.ID} | Could not create directory: ${directoryPath}`,
+          createError
+        );
+
+        // If createDirectory fails, try creating parent directories first
+        const pathParts = directoryPath.split("/").filter((part) => part);
+        let currentPath = "";
+
+        for (const part of pathParts) {
+          currentPath = currentPath ? `${currentPath}/${part}` : part;
+          try {
+            await FilePicker.browse("data", currentPath);
+          } catch (browseError) {
+            try {
+              await FilePicker.createDirectory("data", currentPath);
+              console.log(
+                `${PlayerBespokeAudio.ID} | Created parent directory: ${currentPath}`
+              );
+            } catch (parentCreateError) {
+              console.warn(
+                `${PlayerBespokeAudio.ID} | Could not create parent directory: ${currentPath}`,
+                parentCreateError
+              );
+            }
+          }
+        }
+      }
     }
   }
 

@@ -72,12 +72,13 @@
             DirectoryTest.log('=== Starting Directory Creation Test ===');
             
             try {
-                // Test the same path structure used in the module
-                const testPath = 'modules/player-bespoke-audio/audio/Q2jZBcF7ivWTDRTb/';
+                // Test the new path structure used in the module
+                const testPath = 'player-audio/Q2jZBcF7ivWTDRTb/';
                 
-                DirectoryTest.log(`Testing path: ${testPath}`);
+                DirectoryTest.log(`Testing path: foundryuserdata/Data/${testPath}`);
                 
-                // Test directory creation
+                // Test directory creation using Foundry's FilePicker API
+                DirectoryTest.log('✓ Using FilePicker.createDirectory() for Linux compatibility');
                 await DirectoryTest.ensureDirectoryExists(testPath);
                 
                 DirectoryTest.log('=== Test Completed Successfully ===');

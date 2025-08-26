@@ -9,7 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial development version
+- **Upload Progress Indicator**: Shows spinning loader during file upload
+- **Smart Tab Refresh**: Audio tab automatically refreshes after upload/delete without closing sheet
+- **Icon-Only Audio Tab**: Audio tab now displays a speaker icon instead of text for cleaner UI
+
+### Changed
+
+- **Improved File Storage**: Audio files now store in `foundryuserdata/Data/player-audio/` instead of module directory
+  - Files persist through module updates
+  - Better organization and backup management
+  - Uses Foundry VTT's optimized data directory structure
+- **Better UX**: Upload process now shows progress and doesn't require sheet reopening
+
+### Fixed
+
+- **Linux Compatibility**: Added proper directory creation using FilePicker.createDirectory() for Linux systems
+- **Directory Creation**: Ensures nested directories are created recursively when needed
 
 ## [1.0.0] - 2024-12-19
 

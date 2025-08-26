@@ -94,12 +94,29 @@ Data/modules/player-bespoke-audio/audio/[character-id]/
 
 ### Directory Structure
 
-The module uses the following directory structure:
+The module uses Foundry VTT's data directory for storing audio files:
 
-- `modules/player-bespoke-audio/audio/` - Main audio directory
-- `modules/player-bespoke-audio/audio/[character-id]/` - Character-specific audio folders
+```
+foundryuserdata/Data/player-audio/
+├── [actor-id-1]/
+│   ├── character-theme.mp3
+│   └── battle-cry.wav
+├── [actor-id-2]/
+│   ├── spell-cast.ogg
+│   └── death-scream.mp3
+└── [fallback files if needed]
+```
 
-**Note**: Foundry VTT automatically creates necessary directories when files are uploaded. The module includes fallback mechanisms to ensure uploads succeed even if the preferred path structure isn't available.
+**Benefits of this approach:**
+
+- **Module Updates**: Audio files persist when the module is updated
+- **Clean Organization**: User data is separate from module code
+- **Better Performance**: Uses Foundry's optimized data directory
+- **Backup Friendly**: All user content is in the data directory
+
+**Note**: The module automatically creates necessary directories using Foundry VTT's FilePicker API, ensuring compatibility across Windows, macOS, and Linux systems. It includes fallback mechanisms to ensure uploads succeed even if the preferred path structure isn't available.
+
+**Migration from v1.0.0**: If you're upgrading from version 1.0.0, your existing audio files in `modules/player-bespoke-audio/audio/` will continue to work, but new uploads will use the improved `player-audio/` directory structure.
 
 ## Compatibility
 

@@ -376,6 +376,34 @@
 
 .sheet .tabs .item[data-tab="audio"] {
   flex: 0 0 auto;
+  min-width: 40px;
+  text-align: center;
+  padding: 0 8px;
+}
+
+.sheet .tabs .item[data-tab="audio"] i {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Upload Progress Indicator */
+.upload-progress {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  color: #6c757d;
+}
+
+.upload-progress i {
+  font-size: 24px;
+  margin-right: 10px;
+  color: #007bff;
+}
+
+.upload-progress .fa-spinner {
+  animation: fa-spin 1s infinite linear;
 }
 
 /* Animation for file upload */
