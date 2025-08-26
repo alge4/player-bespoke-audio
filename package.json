@@ -14,6 +14,7 @@
     "release:beta": "node scripts/release.js beta",
     "release:rc": "node scripts/release.js rc",
     "validate": "node -c scripts/player-bespoke-audio.js && echo '✅ JavaScript syntax valid'",
+    "community-check": "node scripts/community-release.js",
     "prepare": "npm run validate",
     "prepublishOnly": "npm run validate"
   },
@@ -24,16 +25,16 @@
     "player",
     "gm-tools"
   ],
-  "author": "Your Name",
+  "author": "Player Bespoke Audio Contributors",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/player-bespoke-audio.git"
+    "url": "https://github.com/alge4/player-bespoke-audio.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/player-bespoke-audio/issues"
+    "url": "https://github.com/alge4/player-bespoke-audio/issues"
   },
-  "homepage": "https://github.com/yourusername/player-bespoke-audio#readme",
+  "homepage": "https://github.com/alge4/player-bespoke-audio#readme",
   "foundry": {
     "minimum": "11.0.0",
     "verified": "12.0.0"

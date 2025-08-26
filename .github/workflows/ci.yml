@@ -21,7 +21,14 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          if [ -f "package-lock.json" ]; then
+            echo "📦 Using npm ci (lock file found)"
+            npm ci
+          else
+            echo "📦 Using npm install (no lock file found)"
+            npm install
+          fi
 
       - name: Validate module.json
         run: |
