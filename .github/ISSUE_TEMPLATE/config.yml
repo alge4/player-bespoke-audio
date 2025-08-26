@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🎮 Foundry VTT Community
+    url: https://discord.gg/foundryvtt
+    about: Join our Discord community for real-time support and discussions
+  - name: 📚 Documentation
+    url: https://github.com/alge4/player-bespoke-audio#readme
+    about: Check our comprehensive documentation and guides
+  - name: 🐛 Known Issues
+    url: https://github.com/alge4/player-bespoke-audio/issues?q=is%3Aissue+is%3Aopen+label%3Abug
+    about: Check if your issue has already been reported

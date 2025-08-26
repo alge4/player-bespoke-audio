@@ -1,0 +1,41 @@
+{
+  "name": "player-bespoke-audio",
+  "version": "1.0.0",
+  "description": "A Foundry VTT module for player-specific audio files",
+  "main": "scripts/player-bespoke-audio.js",
+  "scripts": {
+    "build": "echo 'No build process needed for this module'",
+    "test": "echo 'No tests configured yet'",
+    "package": "node scripts/package.js",
+    "lint": "echo 'Add linting tools as needed'",
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major",
+    "release:beta": "node scripts/release.js beta",
+    "release:rc": "node scripts/release.js rc",
+    "validate": "node -c scripts/player-bespoke-audio.js && echo '✅ JavaScript syntax valid'",
+    "prepare": "npm run validate",
+    "prepublishOnly": "npm run validate"
+  },
+  "keywords": [
+    "foundry-vtt",
+    "module",
+    "audio",
+    "player",
+    "gm-tools"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/player-bespoke-audio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/player-bespoke-audio/issues"
+  },
+  "homepage": "https://github.com/yourusername/player-bespoke-audio#readme",
+  "foundry": {
+    "minimum": "11.0.0",
+    "verified": "12.0.0"
+  }
+}

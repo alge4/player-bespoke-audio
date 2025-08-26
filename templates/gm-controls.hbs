@@ -1,0 +1,54 @@
+<div class="player-bespoke-audio-gm-controls">
+    <h2><i class="fas fa-volume-up"></i> {{localize "PBA.PlayerAudioControls"}}</h2>
+    
+    <div class="controls-grid">
+        {{#each actors}}
+        <div class="actor-audio-control" data-actor-id="{{id}}">
+            <div class="actor-info">
+                <img src="{{img}}" alt="{{name}}" class="actor-avatar">
+                <div class="actor-details">
+                    <h4>{{name}}</h4>
+                    <span class="player-name">{{playerName}}</span>
+                </div>
+            </div>
+            
+            <div class="audio-files-quick">
+                {{#if audioFiles.length}}
+                <select class="audio-file-select">
+                    <option value="">{{localize "PBA.SelectAudioFile"}}</option>
+                    {{#each audioFiles}}
+                    <option value="{{path}}" data-name="{{name}}">{{name}}</option>
+                    {{/each}}
+                </select>
+                <button type="button" class="play-selected-audio" data-actor-id="{{../id}}">
+                    <i class="fas fa-play"></i>
+                </button>
+                {{else}}
+                <span class="no-files">{{localize "PBA.NoFiles"}}</span>
+                {{/if}}
+            </div>
+            
+            <div class="quick-actions">
+                <button type="button" 
+                        class="stop-actor-audio" 
+                        data-actor-id="{{id}}"
+                        title="{{localize 'PBA.StopAudio'}}">
+                    <i class="fas fa-stop"></i>
+                </button>
+                <button type="button" 
+                        class="open-actor-sheet" 
+                        data-actor-id="{{id}}"
+                        title="{{localize 'PBA.OpenCharacterSheet'}}">
+                    <i class="fas fa-user"></i>
+                </button>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+    
+    {{#unless actors.length}}
+    <div class="no-characters">
+        <p><i class="fas fa-users"></i> {{localize "PBA.NoCharacters"}}</p>
+    </div>
+    {{/unless}}
+</div>

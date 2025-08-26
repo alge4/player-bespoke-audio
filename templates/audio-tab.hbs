@@ -1,0 +1,90 @@
+<div class="player-bespoke-audio-tab">
+    <div class="audio-controls-section">
+        {{#if isGM}}
+        <div class="upload-section">
+            <h3><i class="fas fa-upload"></i> {{localize "PBA.UploadAudio"}}</h3>
+            <div class="form-group">
+                <label for="audio-file-upload-{{actorId}}" class="file-upload-label">
+                    <i class="fas fa-cloud-upload-alt"></i> {{localize "PBA.SelectAudioFile"}}
+                </label>
+                <input type="file" 
+                       id="audio-file-upload-{{actorId}}" 
+                       class="audio-file-upload" 
+                       accept="audio/*" 
+                       style="display: none;">
+            </div>
+            <p class="upload-hint">{{localize "PBA.UploadHint"}}</p>
+        </div>
+        {{/if}}
+    </div>
+
+    <div class="audio-playlist-section">
+        <h3><i class="fas fa-list"></i> {{localize "PBA.AudioPlaylist"}}</h3>
+        
+        {{#if audioFiles.length}}
+        <div class="audio-files-list">
+            {{#each audioFiles}}
+            <div class="audio-file-item" data-file-name="{{name}}">
+                <div class="file-info">
+                    <div class="file-name">
+                        <i class="fas fa-music"></i>
+                        <span class="name">{{name}}</span>
+                    </div>
+                    <div class="file-meta">
+                        <span class="uploaded-by">{{localize "PBA.UploadedBy"}}: {{uploadedBy}}</span>
+                        <span class="uploaded-date">{{localize "PBA.UploadedOn"}}: {{formatDate uploadedAt}}</span>
+                    </div>
+                </div>
+                
+                <div class="file-actions">
+                    {{#if ../isGM}}
+                    <button type="button" 
+                            class="play-audio-file" 
+                            data-file-name="{{name}}" 
+                            data-file-path="{{path}}"
+                            title="{{localize 'PBA.PlayForPlayer'}}">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button type="button" 
+                            class="delete-audio-file" 
+                            data-file-name="{{name}}"
+                            title="{{localize 'PBA.DeleteFile'}}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    {{else}}
+                    <div class="file-preview">
+                        <audio controls preload="none">
+                            <source src="{{path}}" type="audio/mpeg">
+                            <source src="{{path}}" type="audio/wav">
+                            <source src="{{path}}" type="audio/ogg">
+                            {{localize "PBA.AudioNotSupported"}}
+                        </audio>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+            {{/each}}
+        </div>
+        {{else}}
+        <div class="no-audio-files">
+            <p><i class="fas fa-music"></i> {{localize "PBA.NoAudioFiles"}}</p>
+            {{#if isGM}}
+            <p class="hint">{{localize "PBA.NoAudioFilesHintGM"}}</p>
+            {{else}}
+            <p class="hint">{{localize "PBA.NoAudioFilesHintPlayer"}}</p>
+            {{/if}}
+        </div>
+        {{/if}}
+    </div>
+
+    {{#if isGM}}
+    <div class="gm-controls-section">
+        <h3><i class="fas fa-cog"></i> {{localize "PBA.GMControls"}}</h3>
+        <div class="control-buttons">
+            <button type="button" class="stop-all-audio" title="{{localize 'PBA.StopAllAudio'}}">
+                <i class="fas fa-stop"></i> {{localize "PBA.StopAll"}}
+            </button>
+        </div>
+    </div>
+    {{/if}}
+</div>

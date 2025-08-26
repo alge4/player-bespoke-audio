@@ -1,0 +1,153 @@
+name: Release Player Bespoke Audio Module
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g., 1.0.0)"
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate module structure
+        run: |
+          echo "Validating module structure..."
+          if [ ! -f "module.json" ]; then
+            echo "❌ module.json not found"
+            exit 1
+          fi
+          if [ ! -f "scripts/player-bespoke-audio.js" ]; then
+            echo "❌ Main script not found"
+            exit 1
+          fi
+          if [ ! -f "styles/player-bespoke-audio.css" ]; then
+            echo "❌ CSS file not found"
+            exit 1
+          fi
+          if [ ! -f "templates/audio-tab.hbs" ]; then
+            echo "❌ Audio tab template not found"
+            exit 1
+          fi
+          echo "✅ Module structure validation passed"
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+          echo "Releasing version: ${{ steps.version.outputs.VERSION }}"
+
+      - name: Create release package
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          PACKAGE_NAME="player-bespoke-audio-v${VERSION}"
+
+          # Create package directory
+          mkdir -p "packages/${PACKAGE_NAME}"
+
+          # Copy module files
+          cp -r module.json "packages/${PACKAGE_NAME}/"
+          cp -r scripts "packages/${PACKAGE_NAME}/"
+          cp -r styles "packages/${PACKAGE_NAME}/"
+          cp -r templates "packages/${PACKAGE_NAME}/"
+          cp -r lang "packages/${PACKAGE_NAME}/"
+          cp -r audio "packages/${PACKAGE_NAME}/"
+          cp README.md "packages/${PACKAGE_NAME}/"
+          cp CHANGELOG.md "packages/${PACKAGE_NAME}/"
+
+          # Create zip file
+          cd packages
+          zip -r "${PACKAGE_NAME}.zip" "${PACKAGE_NAME}/"
+          cd ..
+
+          echo "PACKAGE_PATH=packages/${PACKAGE_NAME}.zip" >> $GITHUB_OUTPUT
+          echo "Created package: packages/${PACKAGE_NAME}.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ steps.create-package.outputs.PACKAGE_PATH }}
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: Player Bespoke Audio v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## Player Bespoke Audio v${{ steps.version.outputs.VERSION }}
+
+            A Foundry VTT module that allows Game Masters to upload and play audio files specifically for individual players through their character sheets.
+
+            ### 🎯 Features
+            - Character-specific audio file management
+            - GM controls for targeted audio playback
+            - Real-time socket communication
+            - Responsive, accessible UI
+            - Automatic directory creation
+            - Fallback upload system
+
+            ### 📦 Installation
+            1. Download the zip file
+            2. Extract to your Foundry VTT `modules` folder
+            3. Restart Foundry VTT
+            4. Enable the module in your world settings
+
+            ### 🔗 Links
+            - [Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+            - [Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+            - [Issues](https://github.com/${{ github.repository }}/issues)
+
+            ### 📋 Requirements
+            - Foundry VTT v11.0+
+            - All game systems supported
+
+            ### 🆘 Support
+            Join the [Foundry VTT Community Discord](https://discord.gg/foundryvtt) for help and support.
+
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update module.json manifest URL
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          MANIFEST_URL="https://github.com/${{ github.repository }}/releases/latest/download/module.json"
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/latest/download/player-bespoke-audio-v${VERSION}.zip"
+
+          # Update module.json with release URLs
+          sed -i "s|https://github.com/yourusername/player-bespoke-audio/releases/latest/download/module.json|${MANIFEST_URL}|g" module.json
+          sed -i "s|https://github.com/yourusername/player-bespoke-audio/releases/latest/download/player-bespoke-audio.zip|${DOWNLOAD_URL}|g" module.json
+
+          echo "Updated module.json with release URLs"
+
+      - name: Commit updated module.json
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add module.json
+          git commit -m "Update module.json manifest URLs for v${{ steps.version.outputs.VERSION }}"
+          git push
+
+      - name: Cleanup
+        run: |
+          rm -rf packages/
+          echo "Cleanup completed"

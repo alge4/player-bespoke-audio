@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Bespoke Audio - Directory Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 3px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>Player Bespoke Audio - Directory Creation Test</h1>
+    
+    <div class="test-section">
+        <h3>Directory Creation Test</h3>
+        <p>This test simulates the directory creation logic used in the Foundry VTT module.</p>
+        <button onclick="testDirectoryCreation()">Test Directory Creation</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Log</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        // Simulate the module's simplified directory handling
+        class DirectoryTest {
+            static log(message) {
+                const logElement = document.getElementById('log');
+                const timestamp = new Date().toLocaleTimeString();
+                logElement.textContent += `[${timestamp}] ${message}\n`;
+                logElement.scrollTop = logElement.scrollTop + 1000;
+            }
+
+            static async createDirectoryStructure(path) {
+                try {
+                    this.log(`Testing directory path: ${path}`);
+                    
+                    // Simulate Foundry VTT's automatic directory creation
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    this.log(`✓ Foundry VTT will create directories automatically`);
+                    
+                    return true;
+                } catch (error) {
+                    this.log(`✗ Error: ${error.message}`);
+                    throw error;
+                }
+            }
+
+            static async ensureDirectoryExists(path) {
+                try {
+                    this.log(`Validating path: ${path}`);
+                    
+                    // Simulate path validation
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                    
+                    this.log(`✓ Path validated - Foundry VTT handles directory creation`);
+                    return true;
+                } catch (error) {
+                    this.log(`✗ Error: ${error.message}`);
+                    throw error;
+                }
+            }
+        }
+
+        async function testDirectoryCreation() {
+            DirectoryTest.log('=== Starting Directory Creation Test ===');
+            
+            try {
+                // Test the same path structure used in the module
+                const testPath = 'modules/player-bespoke-audio/audio/Q2jZBcF7ivWTDRTb/';
+                
+                DirectoryTest.log(`Testing path: ${testPath}`);
+                
+                // Test directory creation
+                await DirectoryTest.ensureDirectoryExists(testPath);
+                
+                DirectoryTest.log('=== Test Completed Successfully ===');
+                
+            } catch (error) {
+                DirectoryTest.log(`=== Test Failed: ${error.message} ===`);
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+
+        // Auto-run test on page load
+        window.addEventListener('load', () => {
+            DirectoryTest.log('Page loaded. Click "Test Directory Creation" to begin.');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "PBA": {
+    "AudioTab": "Audio",
+    "UploadAudio": "Upload Audio",
+    "SelectAudioFile": "Select Audio File",
+    "UploadHint": "Upload audio files (MP3, WAV, OGG) to create a personalized playlist for this character. Only the GM and character owner can manage these files.",
+    "AudioPlaylist": "Audio Playlist",
+    "UploadedBy": "Uploaded by",
+    "UploadedOn": "Uploaded on",
+    "PlayForPlayer": "Play for Player",
+    "DeleteFile": "Delete File",
+    "DeleteAudioFile": "Delete Audio File",
+    "DeleteAudioFileConfirm": "Are you sure you want to delete this audio file",
+    "AudioNotSupported": "Your browser does not support the audio element.",
+    "NoAudioFiles": "No audio files uploaded yet",
+    "NoAudioFilesHintGM": "Use the upload section above to add audio files for this character.",
+    "NoAudioFilesHintPlayer": "Your GM hasn't uploaded any audio files for this character yet.",
+    "GMControls": "GM Controls",
+    "StopAllAudio": "Stop All Audio",
+    "StopAll": "Stop All",
+    "PlayerAudioControls": "Player Audio Controls",
+    "SelectAudioFile": "Select an audio file...",
+    "NoFiles": "No audio files",
+    "StopAudio": "Stop Audio",
+    "OpenCharacterSheet": "Open Character Sheet",
+    "NoCharacters": "No player characters found"
+  }
+}
