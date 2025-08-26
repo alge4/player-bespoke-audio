@@ -1,1 +1,27 @@
+# Audio files (examples/tests)
 *.mp3
+*.wav
+*.ogg
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Keep package-lock.json for reproducible builds
+# !package-lock.json
