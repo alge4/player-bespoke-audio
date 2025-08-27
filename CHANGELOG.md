@@ -5,13 +5,17 @@ All notable changes to the Player Bespoke Audio module will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2025-08-27
 
 ### Added
 
-- **Upload Progress Indicator**: Shows spinning loader during file upload
-- **Smart Tab Refresh**: Audio tab automatically refreshes after upload/delete without closing sheet
+- Release 1.1.0
+
+### Added
+
+- **Upload Progress Indicator**: Shows notification during file upload
 - **Icon-Only Audio Tab**: Audio tab now displays a speaker icon instead of text for cleaner UI
+- **Simple Refresh Solution**: Character sheet refreshes after upload/delete for reliable functionality
 
 ### Changed
 

@@ -166,35 +166,6 @@ class PlayerBespokeAudio {
     PlayerBespokeAudio.bindAudioTabEvents(html, sheet.actor);
   }
 
-  static async refreshAudioTab(html, actor) {
-    // Get updated audio files for this actor
-    const audioFiles =
-      actor.getFlag(
-        PlayerBespokeAudio.ID,
-        PlayerBespokeAudio.FLAGS.AUDIO_FILES
-      ) || [];
-
-    // Re-render the audio tab content
-    const audioTabContent = await renderTemplate(
-      PlayerBespokeAudio.TEMPLATES.AUDIO_TAB,
-      {
-        audioFiles: audioFiles,
-        isGM: game.user.isGM,
-        actorId: actor.id,
-      }
-    );
-
-    // Update the audio tab content
-    const audioTab = html.find('.tab[data-tab="audio"]');
-    audioTab.html(audioTabContent);
-
-    // Unbind existing event listeners to prevent duplicates
-    PlayerBespokeAudio.unbindAudioTabEvents(html);
-
-    // Re-bind event listeners for the refreshed content
-    PlayerBespokeAudio.bindAudioTabEvents(html, actor);
-  }
-
   static unbindAudioTabEvents(html) {
     // Unbind all audio tab related events to prevent duplicates
     html.find(".audio-file-upload").off("change");
@@ -209,20 +180,16 @@ class PlayerBespokeAudio {
       if (!file) return;
 
       // Show upload in progress
-      const audioTab = html.find('.tab[data-tab="audio"]');
-      const originalContent = audioTab.html();
-      audioTab.html(
-        '<div class="upload-progress"><i class="fas fa-spinner fa-spin"></i> Uploading audio file...</div>'
-      );
+      ui.notifications.info(`Uploading "${file.name}"...`);
 
       try {
         await PlayerBespokeAudio.uploadAudioFile(actor, file);
-        // Refresh just the audio tab content
-        await PlayerBespokeAudio.refreshAudioTab(html, actor);
+
+        // Simple solution: refresh the entire character sheet
+        actor.sheet.render();
+
         ui.notifications.info(`Audio file "${file.name}" uploaded and ready!`);
       } catch (error) {
-        // Restore original content on error
-        audioTab.html(originalContent);
         ui.notifications.error(`Failed to upload audio file: ${error.message}`);
       }
 
@@ -243,8 +210,8 @@ class PlayerBespokeAudio {
       if (confirmed) {
         try {
           await PlayerBespokeAudio.deleteAudioFile(actor, fileName);
-          // Refresh just the audio tab content
-          await PlayerBespokeAudio.refreshAudioTab(html, actor);
+          // Simple solution: refresh the entire character sheet
+          actor.sheet.render();
           ui.notifications.info(
             `Audio file "${fileName}" deleted successfully`
           );
