@@ -150,6 +150,21 @@ class ReleaseManager {
       // Create release notes
       this.createReleaseNotes(newVersion);
 
+      // Run package command to create clean release zip
+      console.log(`\n📦 Creating release package...`);
+      try {
+        const { execSync } = require("child_process");
+        execSync("npm run package", { stdio: "inherit" });
+        console.log(`✅ Release package created successfully!`);
+      } catch (error) {
+        console.warn(
+          `⚠️  Warning: Could not create release package: ${error.message}`
+        );
+        console.log(
+          `💡 You can manually run 'npm run package' to create the release zip`
+        );
+      }
+
       console.log(`\n🎉 Release ${newVersion} prepared successfully!`);
 
       // Show git commands
