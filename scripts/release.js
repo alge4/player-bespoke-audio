@@ -3,172 +3,154 @@
 /**
  * Release Script for Player Bespoke Audio Module
  *
- * Usage:
- *   node scripts/release.js patch    # 1.0.0 -> 1.0.1
- *   node scripts/release.js minor    # 1.0.0 -> 1.1.0
- *   node scripts/release.js major    # 1.0.0 -> 2.0.0
- *   node scripts/release.js beta     # 1.0.0 -> 1.0.0-beta.1
- *   node scripts/release.js rc       # 1.0.0 -> 1.0.0-rc.1
+ * Creates a release package and uploads it to GitHub using GitHub CLI
  */
 
+const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
 class ReleaseManager {
   constructor() {
     this.rootDir = path.join(__dirname, "..");
-    this.filesToUpdate = ["package.json", "module.json"];
+    this.packageName = "player-bespoke-audio";
+    this.version = this.getVersion();
+    this.tagName = `v${this.version}`;
   }
 
-  // Get current version from package.json
-  getCurrentVersion() {
+  // Get version from package.json
+  getVersion() {
     const packagePath = path.join(this.rootDir, "package.json");
     const packageData = JSON.parse(fs.readFileSync(packagePath, "utf8"));
     return packageData.version;
   }
 
-  // Parse version string
-  parseVersion(version) {
-    const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
-    if (!match) {
-      throw new Error(`Invalid version format: ${version}`);
-    }
-
-    return {
-      major: parseInt(match[1]),
-      minor: parseInt(match[2]),
-      patch: parseInt(match[3]),
-      prerelease: match[4] || null,
-    };
-  }
-
-  // Generate new version
-  generateNewVersion(currentVersion, releaseType) {
-    const parsed = this.parseVersion(currentVersion);
-
-    switch (releaseType) {
-      case "major":
-        return `${parsed.major + 1}.0.0`;
-      case "minor":
-        return `${parsed.major}.${parsed.minor + 1}.0`;
-      case "patch":
-        return `${parsed.major}.${parsed.minor}.${parsed.patch + 1}`;
-      case "beta":
-        if (parsed.prerelease && parsed.prerelease.startsWith("beta.")) {
-          const betaNum = parseInt(parsed.prerelease.split(".")[1]) + 1;
-          return `${parsed.major}.${parsed.minor}.${parsed.patch}-beta.${betaNum}`;
-        } else {
-          return `${parsed.major}.${parsed.minor}.${parsed.patch}-beta.1`;
-        }
-      case "rc":
-        if (parsed.prerelease && parsed.prerelease.startsWith("rc.")) {
-          const rcNum = parseInt(parsed.prerelease.split(".")[1]) + 1;
-          return `${parsed.major}.${parsed.minor}.${parsed.patch}-rc.${rcNum}`;
-        } else {
-          return `${parsed.major}.${parsed.minor}.${parsed.patch}-rc.1`;
-        }
-      default:
-        throw new Error(`Unknown release type: ${releaseType}`);
+  // Check if GitHub CLI is installed
+  checkGitHubCLI() {
+    try {
+      execSync("gh --version", { stdio: "ignore" });
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 
-  // Update version in a file
-  updateVersionInFile(filePath, oldVersion, newVersion) {
-    const content = fs.readFileSync(filePath, "utf8");
-    const updatedContent = content.replace(
-      new RegExp(oldVersion, "g"),
-      newVersion
-    );
-    fs.writeFileSync(filePath, updatedContent);
-    console.log(`✓ Updated ${filePath}: ${oldVersion} -> ${newVersion}`);
-  }
-
-  // Update changelog
-  updateChangelog(newVersion) {
-    const changelogPath = path.join(this.rootDir, "CHANGELOG.md");
-    const changelog = fs.readFileSync(changelogPath, "utf8");
-
-    const today = new Date().toISOString().split("T")[0];
-    const newEntry = `## [${newVersion}] - ${today}\n\n### Added\n- Release ${newVersion}\n\n`;
-
-    const updatedChangelog = changelog.replace("## [Unreleased]", newEntry);
-    fs.writeFileSync(changelogPath, updatedChangelog);
-    console.log(`✓ Updated CHANGELOG.md with version ${newVersion}`);
-  }
-
-  // Create release notes
-  createReleaseNotes(newVersion) {
-    const changelogPath = path.join(this.rootDir, "CHANGELOG.md");
-    const changelog = fs.readFileSync(changelogPath, "utf8");
-
-    const versionMatch = changelog.match(
-      new RegExp(`## \\[${newVersion}\\][\\s\\S]*?(?=## \\[|$)`)
-    );
-    if (versionMatch) {
-      const releaseNotes = versionMatch[0].trim();
-      const releaseNotesPath = path.join(
-        this.rootDir,
-        `RELEASE_NOTES_${newVersion}.md`
-      );
-      fs.writeFileSync(releaseNotesPath, releaseNotes);
-      console.log(`✓ Created release notes: RELEASE_NOTES_${newVersion}.md`);
+  // Check if we're authenticated with GitHub
+  checkGitHubAuth() {
+    try {
+      execSync("gh auth status", { stdio: "ignore" });
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 
-  // Create git tag command
-  createGitCommands(newVersion) {
-    console.log("\n📋 Git Commands to run:");
-    console.log(`git add .`);
-    console.log(`git commit -m "Release version ${newVersion}"`);
-    console.log(`git tag -a v${newVersion} -m "Release version ${newVersion}"`);
-    console.log(`git push origin main`);
-    console.log(`git push origin v${newVersion}`);
+  // Create and push a git tag
+  createTag() {
+    try {
+      console.log(`🏷️  Creating git tag: ${this.tagName}`);
+      
+      // Check if tag already exists
+      try {
+        execSync(`git tag -l "${this.tagName}"`, { stdio: "ignore" });
+        console.log(`⚠️  Tag ${this.tagName} already exists`);
+        return false;
+      } catch (error) {
+        // Tag doesn't exist, create it
+      }
+
+      execSync(`git tag ${this.tagName}`, { stdio: "inherit" });
+      execSync(`git push origin ${this.tagName}`, { stdio: "inherit" });
+      
+      console.log(`✅ Tag ${this.tagName} created and pushed`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to create tag: ${error.message}`);
+      return false;
+    }
+  }
+
+  // Create release package
+  createPackage() {
+    try {
+      console.log("📦 Creating release package...");
+      execSync("node scripts/package.js", { stdio: "inherit" });
+      console.log("✅ Package created successfully");
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to create package: ${error.message}`);
+      return false;
+    }
+  }
+
+  // Create GitHub release
+  createGitHubRelease() {
+    try {
+      console.log("🚀 Creating GitHub release...");
+      
+      const packagePath = path.join(this.rootDir, "dist", `${this.packageName}-${this.version}.zip`);
+      if (!fs.existsSync(packagePath)) {
+        throw new Error("Release package not found");
+      }
+
+      // Create release with GitHub CLI
+      const releaseCommand = [
+        "gh release create",
+        this.tagName,
+        packagePath,
+        "--title", `Player Bespoke Audio ${this.tagName}`,
+        "--notes", `Release ${this.tagName} of Player Bespoke Audio module for Foundry VTT.`,
+        "--draft=false",
+        "--prerelease=false"
+      ].join(" ");
+
+      execSync(releaseCommand, { stdio: "inherit" });
+      
+      console.log("✅ GitHub release created successfully");
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to create GitHub release: ${error.message}`);
+      return false;
+    }
   }
 
   // Main release process
-  async release(releaseType) {
+  async release() {
     try {
-      console.log(`🚀 Starting release process for type: ${releaseType}`);
+      console.log(`🚀 Starting release process for ${this.packageName} ${this.tagName}`);
 
-      const currentVersion = this.getCurrentVersion();
-      console.log(`📦 Current version: ${currentVersion}`);
-
-      const newVersion = this.generateNewVersion(currentVersion, releaseType);
-      console.log(`🎯 New version: ${newVersion}`);
-
-      // Update all files
-      for (const file of this.filesToUpdate) {
-        const filePath = path.join(this.rootDir, file);
-        if (fs.existsSync(filePath)) {
-          this.updateVersionInFile(filePath, currentVersion, newVersion);
-        }
+      // Check prerequisites
+      if (!this.checkGitHubCLI()) {
+        console.error("❌ GitHub CLI is not installed. Please install it first:");
+        console.error("   https://cli.github.com/");
+        process.exit(1);
       }
 
-      // Update changelog
-      this.updateChangelog(newVersion);
-
-      // Create release notes
-      this.createReleaseNotes(newVersion);
-
-      // Run package command to create clean release zip
-      console.log(`\n📦 Creating release package...`);
-      try {
-        const { execSync } = require("child_process");
-        execSync("npm run package", { stdio: "inherit" });
-        console.log(`✅ Release package created successfully!`);
-      } catch (error) {
-        console.warn(
-          `⚠️  Warning: Could not create release package: ${error.message}`
-        );
-        console.log(
-          `💡 You can manually run 'npm run package' to create the release zip`
-        );
+      if (!this.checkGitHubAuth()) {
+        console.error("❌ Not authenticated with GitHub. Please run 'gh auth login' first.");
+        process.exit(1);
       }
 
-      console.log(`\n🎉 Release ${newVersion} prepared successfully!`);
+      // Create package
+      if (!this.createPackage()) {
+        process.exit(1);
+      }
 
-      // Show git commands
-      this.createGitCommands(newVersion);
+      // Create tag
+      if (!this.createTag()) {
+        console.log("⚠️  Skipping tag creation");
+      }
+
+      // Create GitHub release
+      if (!this.createGitHubRelease()) {
+        process.exit(1);
+      }
+
+      console.log(`\n🎉 Release ${this.tagName} completed successfully!`);
+      console.log(`📦 Package: dist/${this.packageName}-${this.version}.zip`);
+      console.log(`🏷️  Tag: ${this.tagName}`);
+      console.log(`🔗 GitHub: https://github.com/alge4/player-bespoke-audio/releases/tag/${this.tagName}`);
+
     } catch (error) {
       console.error(`❌ Release failed: ${error.message}`);
       process.exit(1);
@@ -178,22 +160,8 @@ class ReleaseManager {
 
 // Main execution
 async function main() {
-  const releaseType = process.argv[2];
-
-  if (!releaseType) {
-    console.log("Usage: node scripts/release.js <release-type>");
-    console.log("Release types: patch, minor, major, beta, rc");
-    console.log("\nExamples:");
-    console.log("  node scripts/release.js patch    # 1.0.0 -> 1.0.1");
-    console.log("  node scripts/release.js minor    # 1.0.0 -> 1.1.0");
-    console.log("  node scripts/release.js major    # 1.0.0 -> 2.0.0");
-    console.log("  node scripts/release.js beta     # 1.0.0 -> 1.0.0-beta.1");
-    console.log("  node scripts/release.js rc       # 1.0.0 -> 1.0.0-rc.1");
-    process.exit(1);
-  }
-
   const releaseManager = new ReleaseManager();
-  await releaseManager.release(releaseType);
+  await releaseManager.release();
 }
 
 if (require.main === module) {
