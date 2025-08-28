@@ -9,6 +9,7 @@
     "package": "node scripts/package.js",
     "lint": "echo 'Add linting tools as needed'",
     "release": "node scripts/release.js",
+    "branch": "node scripts/create-branch.js",
     "validate": "node -c scripts/player-bespoke-audio.js && echo '✅ JavaScript syntax valid'",
     "community-check": "node scripts/community-release.js",
     "prepare": "npm run validate",

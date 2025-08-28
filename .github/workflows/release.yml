@@ -21,28 +21,35 @@ on:
 jobs:
   package-and-release:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Auto-version files
         id: version
         run: |
           # Get current version
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Current version: $CURRENT_VERSION"
-          
+
+          # Check if this is a pre-release version (contains hyphens)
+          if [[ "$CURRENT_VERSION" == *"-"* ]]; then
+            echo "❌ Cannot create release for pre-release version: $CURRENT_VERSION"
+            echo "Pre-release versions should be merged to main first"
+            exit 1
+          fi
+
           # Determine new version based on input or tag
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION_TYPE="${{ github.event.inputs.version_type }}"
@@ -50,7 +57,7 @@ jobs:
             # Extract version from tag (e.g., v1.2.3 -> 1.2.3)
             VERSION_TYPE="patch"
           fi
-          
+
           # Increment version
           if [ "$VERSION_TYPE" = "major" ]; then
             NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1+1".0.0"}')
@@ -59,24 +66,24 @@ jobs:
           else
             NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2"."$3+1}')
           fi
-          
+
           echo "New version: $NEW_VERSION"
           echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
-          
+
           # Update package.json
           npm version $NEW_VERSION --no-git-tag-version
-          
+
           # Update module.json
           sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$NEW_VERSION\"/" module.json
-          
+
           # Update dist URLs in module.json
           sed -i "s|player-bespoke-audio-[0-9.]*\.zip|player-bespoke-audio-$NEW_VERSION.zip|g" module.json
-          
+
           echo "Updated version to $NEW_VERSION in package.json and module.json"
-          
+
       - name: Package module
         run: node scripts/package.js
-        
+
       - name: Commit version changes
         run: |
           git config --local user.email "action@github.com"
@@ -84,7 +91,7 @@ jobs:
           git add package.json module.json
           git commit -m "Bump version to ${{ steps.version.outputs.VERSION }} [skip ci]"
           git push
-          
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:

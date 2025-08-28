@@ -1,0 +1,134 @@
+name: Auto-Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: "Version increment type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+  push:
+    branches:
+      - main
+      - "feature/**"
+      - "bugfix/**"
+      - "hotfix/**"
+      - "develop"
+    paths:
+      - "scripts/**"
+      - "styles/**"
+      - "templates/**"
+      - "lang/**"
+      - "module.json"
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Auto-version files
+        id: version
+        run: |
+          # Get current version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          # Get branch name and clean it
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          CLEAN_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//')
+          echo "Branch: $BRANCH_NAME (clean: $CLEAN_BRANCH_NAME)"
+
+          # Determine version type based on input or branch
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION_TYPE="${{ github.event.inputs.version_type }}"
+          else
+            # Auto-determine version type based on branch
+            if [ "$BRANCH_NAME" = "main" ]; then
+              VERSION_TYPE="patch"
+            else
+              VERSION_TYPE="patch"
+            fi
+          fi
+
+          # Get the last official release version (from tags)
+          LAST_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          if [ -z "$LAST_TAG" ]; then
+            LAST_TAG="v0.0.0"
+          fi
+          LAST_VERSION=${LAST_TAG#v}
+          echo "Last official version: $LAST_VERSION"
+
+          # Calculate new version
+          if [ "$BRANCH_NAME" = "main" ]; then
+            # Main branch: clean version increment
+            if [ "$VERSION_TYPE" = "major" ]; then
+              NEW_VERSION=$(echo $LAST_VERSION | awk -F. '{print $1+1".0.0"}')
+            elif [ "$VERSION_TYPE" = "minor" ]; then
+              NEW_VERSION=$(echo $LAST_VERSION | awk -F. '{print $1"."$2+1".0"}')
+            else
+              NEW_VERSION=$(echo $LAST_VERSION | awk -F. '{print $1"."$2"."$3+1}')
+            fi
+            VERSION_STRING="$NEW_VERSION"
+          else
+            # Non-main branch: pre-release version
+            if [ "$VERSION_TYPE" = "major" ]; then
+              BASE_VERSION=$(echo $LAST_VERSION | awk -F. '{print $1+1".0.0"}')
+            elif [ "$VERSION_TYPE" = "minor" ]; then
+              BASE_VERSION=$(echo $LAST_VERSION | awk -F. '{print $1"."$2+1".0"}')
+            else
+              BASE_VERSION=$(echo $LAST_VERSION | awk -F. '{print $1"."$2"."$3+1}')
+            fi
+            VERSION_STRING="$BASE_VERSION-$CLEAN_BRANCH_NAME"
+            NEW_VERSION="$VERSION_STRING"
+          fi
+
+          echo "New version: $NEW_VERSION"
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION_STRING=$VERSION_STRING" >> $GITHUB_OUTPUT
+
+          # Update package.json
+          npm version $NEW_VERSION --no-git-tag-version
+
+          # Update module.json
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$NEW_VERSION\"/" module.json
+
+          # Update dist URLs in module.json (only for main branch)
+          if [ "$BRANCH_NAME" = "main" ]; then
+            sed -i "s|player-bespoke-audio-[0-9.]*\.zip|player-bespoke-audio-$NEW_VERSION.zip|g" module.json
+          fi
+
+          echo "Updated version to $NEW_VERSION in package.json and module.json"
+
+      - name: Commit and push version changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add package.json module.json
+          git commit -m "Bump version to ${{ steps.version.outputs.VERSION }} [skip ci]"
+          git push
+
+      - name: Output new version
+        run: |
+          echo "🎉 Version bumped to ${{ steps.version.outputs.VERSION }}"
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "📦 Ready for official release: npm run release"
+          else
+            echo "🔧 Development version: ${{ steps.version.outputs.VERSION }}"
+            echo "📦 Merge to main for official release"
+          fi
