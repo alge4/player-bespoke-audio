@@ -49,7 +49,7 @@ class ReleaseManager {
   createTag() {
     try {
       console.log(`🏷️  Creating git tag: ${this.tagName}`);
-      
+
       // Check if tag already exists
       try {
         execSync(`git tag -l "${this.tagName}"`, { stdio: "ignore" });
@@ -61,7 +61,7 @@ class ReleaseManager {
 
       execSync(`git tag ${this.tagName}`, { stdio: "inherit" });
       execSync(`git push origin ${this.tagName}`, { stdio: "inherit" });
-      
+
       console.log(`✅ Tag ${this.tagName} created and pushed`);
       return true;
     } catch (error) {
@@ -87,25 +87,34 @@ class ReleaseManager {
   createGitHubRelease() {
     try {
       console.log("🚀 Creating GitHub release...");
-      
-      const packagePath = path.join(this.rootDir, "dist", `${this.packageName}-${this.version}.zip`);
+
+      const packagePath = path.join(
+        this.rootDir,
+        "dist",
+        `${this.packageName}-${this.version}.zip`
+      );
       if (!fs.existsSync(packagePath)) {
         throw new Error("Release package not found");
       }
 
-      // Create release with GitHub CLI
-      const releaseCommand = [
-        "gh release create",
-        this.tagName,
-        packagePath,
-        "--title", `Player Bespoke Audio ${this.tagName}`,
-        "--notes", `Release ${this.tagName} of Player Bespoke Audio module for Foundry VTT.`,
-        "--draft=false",
-        "--prerelease=false"
-      ].join(" ");
+      // Create release with GitHub CLI using proper argument array
+      execSync(
+        "gh",
+        [
+          "release",
+          "create",
+          this.tagName,
+          packagePath,
+          "--title",
+          `Player Bespoke Audio ${this.tagName}`,
+          "--notes",
+          `Release ${this.tagName} of Player Bespoke Audio module for Foundry VTT.`,
+          "--draft=false",
+          "--prerelease=false",
+        ],
+        { stdio: "inherit" }
+      );
 
-      execSync(releaseCommand, { stdio: "inherit" });
-      
       console.log("✅ GitHub release created successfully");
       return true;
     } catch (error) {
@@ -117,17 +126,23 @@ class ReleaseManager {
   // Main release process
   async release() {
     try {
-      console.log(`🚀 Starting release process for ${this.packageName} ${this.tagName}`);
+      console.log(
+        `🚀 Starting release process for ${this.packageName} ${this.tagName}`
+      );
 
       // Check prerequisites
       if (!this.checkGitHubCLI()) {
-        console.error("❌ GitHub CLI is not installed. Please install it first:");
+        console.error(
+          "❌ GitHub CLI is not installed. Please install it first:"
+        );
         console.error("   https://cli.github.com/");
         process.exit(1);
       }
 
       if (!this.checkGitHubAuth()) {
-        console.error("❌ Not authenticated with GitHub. Please run 'gh auth login' first.");
+        console.error(
+          "❌ Not authenticated with GitHub. Please run 'gh auth login' first."
+        );
         process.exit(1);
       }
 
@@ -149,8 +164,9 @@ class ReleaseManager {
       console.log(`\n🎉 Release ${this.tagName} completed successfully!`);
       console.log(`📦 Package: dist/${this.packageName}-${this.version}.zip`);
       console.log(`🏷️  Tag: ${this.tagName}`);
-      console.log(`🔗 GitHub: https://github.com/alge4/player-bespoke-audio/releases/tag/${this.tagName}`);
-
+      console.log(
+        `🔗 GitHub: https://github.com/alge4/player-bespoke-audio/releases/tag/${this.tagName}`
+      );
     } catch (error) {
       console.error(`❌ Release failed: ${error.message}`);
       process.exit(1);
