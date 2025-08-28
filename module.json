@@ -2,7 +2,7 @@
   "id": "player-bespoke-audio",
   "title": "Player Bespoke Audio",
   "description": "Allows GMs to upload and play audio files specifically for individual players through their character sheets.",
-  "version": "0.1.0",
+  "version": "0.1.2-bugfix-player-character-sheet-loss-of-content-on-upload",
   "compatibility": {
     "minimum": "11",
     "verified": "12"

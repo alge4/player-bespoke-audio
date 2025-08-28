@@ -1,6 +1,6 @@
 {
   "name": "player-bespoke-audio",
-  "version": "0.1.0",
+  "version": "0.1.2-bugfix-player-character-sheet-loss-of-content-on-upload",
   "description": "A Foundry VTT module for player-specific audio files",
   "main": "scripts/player-bespoke-audio.js",
   "scripts": {
