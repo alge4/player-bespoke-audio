@@ -22,11 +22,35 @@ class PackageManager {
     );
   }
 
-  // Get version from package.json
+  // Get version from package.json or current branch
   getVersion() {
     const packagePath = path.join(this.rootDir, "package.json");
     const packageData = JSON.parse(fs.readFileSync(packagePath, "utf8"));
-    return packageData.version;
+    const baseVersion = packageData.version;
+
+    // Check if we're on a feature/bugfix branch
+    try {
+      const currentBranch = this.getCurrentBranch();
+      if (currentBranch !== "main" && currentBranch !== "master") {
+        // Create branch-specific version: 0.1.0-feature-audio-upload
+        const branchSuffix = currentBranch.replace(/[^a-zA-Z0-9]/g, "-");
+        return `${baseVersion}-${branchSuffix}`;
+      }
+    } catch (error) {
+      console.warn("⚠️  Could not determine git branch, using base version");
+    }
+
+    return baseVersion;
+  }
+
+  // Get current git branch
+  getCurrentBranch() {
+    try {
+      const { execSync } = require("child_process");
+      return execSync("git branch --show-current", { encoding: "utf8" }).trim();
+    } catch (error) {
+      throw new Error("Could not determine current branch");
+    }
   }
 
   // Files to include in the release (Foundry VTT module requirements + core files)
@@ -246,9 +270,14 @@ class PackageManager {
   // Main packaging process
   async package() {
     try {
+      const currentBranch = this.getCurrentBranch();
       console.log(
         `🚀 Starting packaging process for ${this.packageName} v${this.version}`
       );
+      console.log(`🌿 Current branch: ${currentBranch}`);
+      if (currentBranch !== "main" && currentBranch !== "master") {
+        console.log(`📦 Creating development package with branch suffix`);
+      }
 
       // Validate required files first
       this.validateRequiredFiles();
